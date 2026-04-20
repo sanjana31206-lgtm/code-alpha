@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeAlpha E-commerce Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<!-- OFFERS BAR -->
+<div class="offers-bar">
+  <div class="offers-scroll">
+    <span>FLAT 40% OFF on Fashion</span>
+    <span>Free Shipping on orders above ₹499</span>
+    <span>New Arrivals in Electronics</span>
+    <span>Buy 2 Get 1 Free on Books</span>
+    <span>FLAT 40% OFF on Fashion</span>
+    <span>Free Shipping on orders above ₹499</span>
+    <span>New Arrivals in Electronics</span>
+    <span>Buy 2 Get 1 Free on Books</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">🎉 Grand Sale — Up to 60% Off</div>
+    <h1>Shop Smarter,<br>Live <span>Better</span></h1>
+    <p>Discover thousands of products at unbeatable prices. Quality guaranteed, delivered to your door.</p>
+    <div class="hero-btns">
+      <button class="btn-hero primary" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Shop Now →</button>
+      <a href="/login.html" class="btn-hero outline">Join Free</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">50K+</div><div class="stat-label">Products</div></div>
+      <div class="stat"><div class="stat-num">2M+</div><div class="stat-label">Customers</div></div>
+      <div class="stat"><div class="stat-num">4.8★</div><div class="stat-label">Avg Rating</div></div>
+      <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Support</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="categories">
+  <div class="section-title">🗂️ Shop by Category</div>
+  <div class="cat-grid">
+    <button class="cat-btn active" onclick="filterCategory('all', this)">🛍️ All</button>
+    <button class="cat-btn" onclick="filterCategory('electronics', this)">📱 Electronics</button>
+    <button class="cat-btn" onclick="filterCategory('fashion', this)">👗 Fashion</button>
+    <button class="cat-btn" onclick="filterCategory('home', this)">🏠 Home & Kitchen</button>
+    <button class="cat-btn" onclick="filterCategory('books', this)">📚 Books</button>
+    <button class="cat-btn" onclick="filterCategory('sports', this)">⚽ Sports</button>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="products-section" id="products">
+  <div class="products-header">
+    <div>
+      <div class="section-title">🔥 Featured Products</div>
+      <div class="product-count" id="product-count"></div>
+    </div>
+    <select class="sort-select" id="sort-select" aria-label="Sort products" onchange="sortProducts()">
+      <option value="default">Sort: Featured</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="rating">Top Rated</option>
+    </select>
+  </div>
+  <div id="product-grid" class="product-grid">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo">CodeAlpha <span>Pro</span></div>
+      <p>Your one-stop destination for quality products at the best prices. Shop with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/cart.html">Cart</a></li>
+        <li><a href="/dashboard.html">My Orders</a></li>
+        <li><a href="/login.html">Login / Signup</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <ul>
+        <li><a href="#">Electronics</a></li>
+        <li><a href="#">Fashion</a></li>
+        <li><a href="#">Home & Kitchen</a></li>
+        <li><a href="#">Books</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="mailto:mdaimanshafi492@gmail.com">📧 mdaimanshafi492@gmail.com</a></li>
+        <li><a href="tel:+917543983040">📞 +91-7543983040</a></li>
+        <li><a href="#">📍 Kalinga University</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 CodeAlpha E-commerce Pro. All rights reserved.</p>
+    <div class="developer-info">
+      Developed by <strong>sanjana kumari</strong> | Kalinga University<br>
+      <a href="mailto:mdaimanshafi492@gmail.com">mdaimanshafi492@gmail.com</a> · <a href="tel:+917543983040">+91-7543983040</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  let allProducts = [];
+  let currentCategory = 'all';
+
+  async function loadProducts(search = '') {
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (currentCategory !== 'all') params.set('category', currentCategory);
+    allProducts = await API.get('/products?' + params);
+    renderProducts(allProducts);
+  }
+
+  function renderProducts(products) {
+    const grid = document.getElementById('product-grid');
+    document.getElementById('product-count').textContent = `${products.length} products found`;
+    if (!products.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-light)">😕 No products found</div>';
+      return;
+    }
+    grid.innerHTML = products.map(p => `
+      <div class="product-card">
+        ${p.badge ? `<div class="product-badge">${p.badge}</div>` : ''}
+        <a href="/product.html?id=${p.id}">
+          <img class="product-img" src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x220?text=Product'">
+        </a>
+        <div class="product-info">
+          <a href="/product.html?id=${p.id}"><div class="product-name">${p.name}</div></a>
+          <div class="product-rating">
+            <span class="stars">${renderStars(p.rating)}</span>
+            <span class="rating-count">(${p.reviews.toLocaleString()})</span>
+          </div>
+          <div class="product-price">
+            <span class="price-current">${fmt(p.price)}</span>
+            <span class="price-original">${fmt(p.originalPrice)}</span>
+            <span class="price-discount">${calcDiscount(p.price, p.originalPrice)}% off</span>
+          </div>
+          <button class="btn-add-cart" onclick="addToCart(${p.id})">🛒 Add to Cart</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function filterCategory(cat, btn) {
+    currentCategory = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadProducts(new URLSearchParams(location.search).get('search') || '');
+  }
+
+  function sortProducts() {
+    const val = document.getElementById('sort-select').value;
+    let sorted = [...allProducts];
+    if (val === 'price-asc') sorted.sort((a, b) => a.price - b.price);
+    else if (val === 'price-desc') sorted.sort((a, b) => b.price - a.price);
+    else if (val === 'rating') sorted.sort((a, b) => b.rating - a.rating);
+    renderProducts(sorted);
+  }
+
+  async function addToCart(id) {
+    const product = allProducts.find(p => p.id === id);
+    if (product) Cart.add(product);
+  }
+
+  const searchParam = new URLSearchParams(location.search).get('search');
+  loadProducts(searchParam || '');
+</script>
+</body>
+</html>

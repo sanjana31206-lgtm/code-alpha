@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — CodeAlpha Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="page-container">
+  <h1 class="page-title">🏷️ Checkout</h1>
+  <div id="checkout-content"></div>
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <p>© 2025 CodeAlpha E-commerce Pro</p>
+    <div class="developer-info">Developed by <strong>sanjana kumari</strong> | <a href="mailto:mdaimanshafi492@gmail.com">mdaimanshafi492@gmail.com</a></div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  function init() {
+    if (!Auth.isLoggedIn()) { window.location.href = '/login.html'; return; }
+    const cart = Cart.get();
+    if (!cart.length) { window.location.href = '/cart.html'; return; }
+    renderCheckout(cart);
+  }
+
+  function renderCheckout(cart) {
+    const user = Auth.get();
+    const subtotal = Cart.total();
+    const shipping = subtotal >= 499 ? 0 : 49;
+    const total = subtotal + shipping;
+
+    document.getElementById('checkout-content').innerHTML = `
+      <div class="checkout-layout">
+        <div class="checkout-form">
+          <div class="checkout-section-title">📦 Delivery Address</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="fname" value="${user.name.split(' ')[0]}" required>
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="lname" value="${user.name.split(' ').slice(1).join(' ')}" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" value="${user.email}" readonly style="background:#f5f5f5">
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="phone" placeholder="+91 XXXXX XXXXX" required>
+          </div>
+          <div class="form-group">
+            <label>Street Address</label>
+            <input type="text" id="address" placeholder="House no, Street, Area" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="city" placeholder="City" required>
+            </div>
+            <div class="form-group">
+              <label>PIN Code</label>
+              <input type="text" id="pin" placeholder="6-digit PIN" maxlength="6" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>State</label>
+            <input type="text" id="state" placeholder="State" required>
+          </div>
+
+          <div class="checkout-section-title" style="margin-top:24px">💳 Payment Method</div>
+          <div class="payment-methods">
+            <label class="payment-option">
+              <input type="radio" name="payment" value="cod" checked>
+              <span>💵 Cash on Delivery</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="upi">
+              <span>📱 UPI Payment</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="card">
+              <span>💳 Credit / Debit Card</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="netbanking">
+              <span>🏦 Net Banking</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="cart-summary">
+          <div class="summary-title">Order Summary</div>
+          ${cart.map(i => `
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;gap:8px">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.name} ×${i.qty}</span>
+              <span style="font-weight:600;white-space:nowrap">${fmt(i.price * i.qty)}</span>
+            </div>`).join('')}
+          <hr style="margin:12px 0;border-color:var(--border)">
+          <div class="summary-row"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>
+          <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? '<span style="color:var(--success)">FREE</span>' : fmt(shipping)}</span></div>
+          <div class="summary-row total"><span>Total</span><span style="color:var(--primary)">${fmt(total)}</span></div>
+          <button class="btn-checkout" onclick="placeOrder(${total})">✅ Place Order</button>
+          <a href="/cart.html" style="display:block;text-align:center;margin-top:12px;font-size:14px;color:var(--text-light)">← Back to Cart</a>
+        </div>
+      </div>`;
+  }
+
+  async function placeOrder(total) {
+    const fields = ['fname', 'lname', 'phone', 'address', 'city', 'pin', 'state'];
+    for (const f of fields) {
+      if (!document.getElementById(f).value.trim()) {
+        showToast('Please fill all required fields', 'error');
+        document.getElementById(f).focus();
+        return;
+      }
+    }
+    const btn = document.querySelector('.btn-checkout');
+    btn.textContent = 'Placing order...';
+    btn.disabled = true;
+
+    const user = Auth.get();
+    const cart = Cart.get();
+    const payment = document.querySelector('input[name="payment"]:checked').value;
+
+    const res = await API.post('/order', {
+      userEmail: user.email,
+      products: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+      totalPrice: total,
+      paymentMethod: payment,
+      address: {
+        name: document.getElementById('fname').value + ' ' + document.getElementById('lname').value,
+        phone: document.getElementById('phone').value,
+        street: document.getElementById('address').value,
+        city: document.getElementById('city').value,
+        pin: document.getElementById('pin').value,
+        state: document.getElementById('state').value
+      }
+    });
+
+    if (res.error) {
+      showToast(res.error, 'error');
+      btn.textContent = '✅ Place Order';
+      btn.disabled = false;
+      return;
+    }
+
+    Cart.clear();
+    showSuccess(res.order);
+  }
+
+  function showSuccess(order) {
+    document.getElementById('checkout-content').innerHTML = `
+      <div style="text-align:center;background:white;border-radius:16px;padding:60px 40px;box-shadow:var(--shadow);max-width:600px;margin:0 auto">
+        <div style="font-size:72px;margin-bottom:16px">🎉</div>
+        <h2 style="font-size:28px;font-weight:800;color:var(--success);margin-bottom:8px">Order Placed Successfully!</h2>
+        <p style="color:var(--text-light);margin-bottom:24px">Thank you for shopping with CodeAlpha Pro</p>
+        <div style="background:var(--bg);border-radius:12px;padding:20px;margin-bottom:24px;text-align:left">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600">Order ID</span>
+            <span style="color:var(--primary);font-weight:700">${order.orderId}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600">Total Paid</span>
+            <span style="font-weight:700">${fmt(order.totalPrice)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-weight:600">Status</span>
+            <span style="color:var(--success);font-weight:600">✅ ${order.status}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a href="/dashboard.html" style="padding:12px 28px;background:var(--primary);color:white;border-radius:8px;font-weight:600">View My Orders</a>
+          <a href="/index.html" style="padding:12px 28px;background:var(--bg);color:var(--text);border-radius:8px;font-weight:600">Continue Shopping</a>
+        </div>
+      </div>`;
+  }
+
+  init();
+</script>
+</body>
+</html>

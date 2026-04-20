@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart — CodeAlpha Pro</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="page-container">
+  <h1 class="page-title">🛒 Shopping Cart</h1>
+  <div id="cart-content"></div>
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <p>© 2025 CodeAlpha E-commerce Pro</p>
+    <div class="developer-info">Developed by <strong>sanjana kumari</strong> | <a href="mailto:shafi492@gmail.com">shafi492@gmail.com</a></div>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  function renderCart() {
+    const cart = Cart.get();
+    const container = document.getElementById('cart-content');
+    if (!cart.length) {
+      container.innerHTML = `
+        <div class="empty-cart">
+          <div class="icon">🛒</div>
+          <h3>Your cart is empty</h3>
+          <p>Looks like you haven't added anything yet.</p>
+          <a href="/index.html" class="btn-checkout" style="display:inline-block;width:auto;padding:12px 32px;border-radius:8px;background:var(--primary);color:white;font-weight:600">Start Shopping</a>
+        </div>`;
+      return;
+    }
+    const subtotal = Cart.total();
+    const shipping = subtotal >= 499 ? 0 : 49;
+    const total = subtotal + shipping;
+
+    container.innerHTML = `
+      <div class="cart-layout">
+        <div class="cart-items">
+          <h3 style="margin-bottom:4px">${cart.length} Item${cart.length > 1 ? 's' : ''}</h3>
+          ${cart.map(item => `
+            <div class="cart-item" id="item-${item.id}">
+              <img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/90?text=P'">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${fmt(item.price)}</div>
+                <div class="qty-control">
+                  <button class="qty-btn" onclick="changeQty(${item.id}, ${item.qty - 1})">−</button>
+                  <span class="qty-num">${item.qty}</span>
+                  <button class="qty-btn" onclick="changeQty(${item.id}, ${item.qty + 1})">+</button>
+                  <span style="font-size:13px;color:var(--text-light);margin-left:8px">= ${fmt(item.price * item.qty)}</span>
+                </div>
+                <button class="btn-remove" onclick="removeItem(${item.id})">🗑️ Remove</button>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div class="cart-summary">
+          <div class="summary-title">Order Summary</div>
+          <div class="summary-row"><span>Subtotal (${Cart.count()} items)</span><span>${fmt(subtotal)}</span></div>
+          <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? '<span style="color:var(--success)">FREE</span>' : fmt(shipping)}</span></div>
+          ${shipping > 0 ? `<div style="font-size:12px;color:var(--text-light);margin-bottom:8px">Add ${fmt(499 - subtotal)} more for free shipping</div>` : ''}
+          <div class="summary-row total"><span>Total</span><span style="color:var(--primary)">${fmt(total)}</span></div>
+          <button class="btn-checkout" onclick="goCheckout()">Proceed to Checkout →</button>
+          <a href="/index.html" style="display:block;text-align:center;margin-top:12px;font-size:14px;color:var(--text-light)">← Continue Shopping</a>
+        </div>
+      </div>`;
+  }
+
+  function changeQty(id, qty) {
+    Cart.updateQty(id, qty);
+    renderCart();
+  }
+
+  function removeItem(id) {
+    Cart.remove(id);
+    showToast('Item removed from cart');
+    renderCart();
+  }
+
+  function goCheckout() {
+    if (!Auth.isLoggedIn()) {
+      showToast('Please login to checkout', 'error');
+      setTimeout(() => window.location.href = '/login.html', 1000);
+      return;
+    }
+    window.location.href = '/checkout.html';
+  }
+
+  renderCart();
+</script>
+</body>
+</html>

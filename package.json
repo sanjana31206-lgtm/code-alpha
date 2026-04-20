@@ -1,0 +1,19 @@
+{
+  "name": "codealpha-ecommerce-pro",
+  "version": "1.0.0",
+  "description": "CodeAlpha E-commerce Pro — by sanjana kumari, Kalinga University",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongodb-memory-server": "^11.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "author": "sanjana kumari — Kalinga University",
+  "license": "MIT"
+}
